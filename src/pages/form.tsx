@@ -1,60 +1,54 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
+import {
+  getAllClients,
+  deleteClient,
+  updateClient,
+  addClient,
+} from "@/api/client";
 
-interface UserData {
-  id: number;
-  nome: string;
-  idade: number;
-  email: string;
-  cpf: string;
-}
+import { UserData } from "@/api/client";
+import router from "next/router";
 
 const UserForm: React.FC = () => {
   const [data, setData] = useState<UserData[]>([]);
   const [editingItem, setEditingItem] = useState<UserData | null>(null);
   const [formData, setFormData] = useState({
+    id: "",
     nome: "",
     idade: "",
     email: "",
     cpf: "",
   });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
-    try {
-      const response = await axios.get("http://localhost:3000/clients");
-      setData(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar os dados da API:", error);
-    }
+    setData(await getAllClients());
   };
 
   const handleDelete = async (id: number) => {
+    const emailToDelete = data.find((item) => item.id === id)?.email;
+    if (!emailToDelete) return;
+
     try {
-      await axios.delete(`http://localhost:3000/clients/${data[id]?.email}`);
+      await deleteClient(emailToDelete);
       setData((prevData) => prevData.filter((item) => item.id !== id));
     } catch (error) {
       console.error("Erro ao deletar o item:", error);
     }
   };
 
-  const handleEdit = (item: UserData) => {
-    setEditingItem(item);
-  };
-
   const handleSaveEdit = async (editedItem: UserData) => {
     try {
-      await axios.put(
-        `http://localhost:3000/clients/${editedItem.email}`,
-        editedItem
-      );
+      await updateClient(editedItem.email, editedItem);
       setData((prevData) =>
         prevData.map((item) => (item.id === editedItem.id ? editedItem : item))
       );
       setEditingItem(null);
+      setIsEditing(false);
     } catch (error) {
       console.error("Erro ao salvar as alterações:", error);
     }
@@ -62,9 +56,16 @@ const UserForm: React.FC = () => {
 
   const handleAddUser = async () => {
     try {
-      await axios.post("http://localhost:3000/clients", formData);
+      const userData: UserData = {
+        ...formData,
+        id: parseInt(formData.id, 10),
+        idade: parseInt(formData.idade, 10),
+      };
+
+      await addClient(userData);
       fetchData();
       setFormData({
+        id: "",
         nome: "",
         idade: "",
         email: "",
@@ -81,6 +82,15 @@ const UserForm: React.FC = () => {
       ...prevFormData,
       [name]: value,
     }));
+  };
+
+  const handleEdit = (item: UserData) => {
+    setEditingItem(item);
+    setIsEditing(true);
+  };
+
+  const newClient = () => {
+    router.push("/newclient");
   };
 
   return (
@@ -112,7 +122,7 @@ const UserForm: React.FC = () => {
                     Apagar
                   </button>
                   <button
-                    onClick={() => handleEdit(item)}
+                    onClick={() => handleEdit(item)} // Alterado aqui para chamar handleEdit
                     className="bg-green-500 text-white px-2 py-1 rounded"
                   >
                     Editar
@@ -122,7 +132,7 @@ const UserForm: React.FC = () => {
             ))}
           </tbody>
         </table>
-        {editingItem && (
+        {isEditing && editingItem && (
           <div className="mt-4">
             <h2>Editando item:</h2>
             <form
@@ -193,7 +203,10 @@ const UserForm: React.FC = () => {
                 Salvar
               </button>
               <button
-                onClick={() => setEditingItem(null)}
+                onClick={() => {
+                  setEditingItem(null);
+                  setIsEditing(false); // Cancelar a edição ao clicar no botão "Cancelar"
+                }}
                 className="bg-gray-500 text-white px-4 py-2 rounded"
               >
                 Cancelar
@@ -202,59 +215,13 @@ const UserForm: React.FC = () => {
           </div>
         )}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-2">Adicionar Novo Usuário:</h2>
-          <form onSubmit={handleAddUser} className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="nome">Nome:</label>
-              <input
-                type="text"
-                id="nome"
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                className="border rounded-lg px-3 py-2"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="idade">Idade:</label>
-              <input
-                type="number"
-                id="idade"
-                name="idade"
-                value={formData.idade}
-                onChange={handleChange}
-                className="border rounded-lg px-3 py-2"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="email">Email:</label>
-              <input
-                type="text"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="border rounded-lg px-3 py-2"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="cpf">CPF:</label>
-              <input
-                type="text"
-                id="cpf"
-                name="cpf"
-                value={formData.cpf}
-                onChange={handleChange}
-                className="border rounded-lg px-3 py-2"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              Adicionar Usuário
-            </button>
-          </form>
+          <button
+            type="submit"
+            className="bg-blue-300 text-white px-4 py-2 rounded"
+            onClick={newClient}
+          >
+            Adicionar Usuário
+          </button>
         </div>
       </div>
     </section>

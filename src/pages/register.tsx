@@ -20,20 +20,15 @@ const FormPage: React.FC = () => {
     e.preventDefault();
 
     try {
-      // Envia os dados do formulário para a API
       await axios.post("http://localhost:3000/user", formData);
 
-      // Limpar os campos após o envio (opcional)
       setFormData({
         email: "",
         password: "",
         name: "",
       });
-
-      // Exibe uma mensagem de sucesso (opcional)
       window.alert("Usuário cadastrado com sucesso!");
     } catch (error) {
-      // Trata os erros, como exibir mensagens de erro na tela.
       window.alert("Erro ao cadastrar o usuário. Tente novamente mais tarde.");
     }
   };
@@ -84,7 +79,7 @@ const FormPage: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="bg-green-400 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2"
+            className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2"
           >
             Cadastrar
           </button>
